@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Crypto_task</string>
+    <string name="currencies_screen_title">Currencies</string>
+    <string name="filter_screen_title">Filter</string>
+    <string name="favourites_screen_title">Favourites</string>
+    <string name="filter_screen">Filter</string>
+</resources>
