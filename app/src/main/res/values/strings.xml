@@ -4,4 +4,5 @@
     <string name="filter_screen_title">Filter</string>
     <string name="favourites_screen_title">Favourites</string>
     <string name="filter_screen">Filter</string>
+    <string name="sort_by">SORT BY:</string>
 </resources>

@@ -11,5 +11,5 @@ data class CurrencyState(
         chosenCoin = "",
         ratesModel = listOf()
     ),
-    val selectedCoin: CurrencyModel? = null,
+    val selectedCoin: String? = null,
 )

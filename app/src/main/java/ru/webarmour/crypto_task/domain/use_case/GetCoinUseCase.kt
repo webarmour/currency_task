@@ -16,7 +16,7 @@ class GetCoinUseCase @Inject constructor(
 
 
     operator fun invoke(
-        currencyOrder: CurrencyOrder = CurrencyOrder.Listing(OrderType.Descending),
+        currencyOrder: CurrencyOrder,
         baseCoin: String,
     ): Flow<CurrencyModel> {
         return flow {
@@ -25,7 +25,7 @@ class GetCoinUseCase @Inject constructor(
                 val sortedRatesModel = when (currencyOrder.orderType) {
                     OrderType.Ascending -> {
                         when (currencyOrder) {
-                            is CurrencyOrder.Listing -> currencyModel.ratesModel.sortedBy { it.price}
+                            is CurrencyOrder.Listing -> currencyModel.ratesModel.sortedBy { it.price }
 
                             is CurrencyOrder.Name -> currencyModel.ratesModel.sortedBy { it.name.lowercase() }
                         }
@@ -39,7 +39,7 @@ class GetCoinUseCase @Inject constructor(
                         }
                     }
                 }
-                emit(currencyModel.copy(ratesModel = sortedRatesModel))
+                emit(CurrencyModel(ratesModel = sortedRatesModel, chosenCoin = baseCoin))
             } catch (e: Exception) {
                 Log.d("MainScreenViewModel", "${e.message}")
             }

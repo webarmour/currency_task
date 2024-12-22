@@ -31,9 +31,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,21 +61,25 @@ import ru.webarmour.crypto_task.presentation.theme.textDefaults
 @Composable
 fun CurrenciesScreen(
     navController: NavHostController,
-    baseCurrency: String,
     textColor: Color = textDefaults,
-    backgroundColor: Color = header
+    backgroundColor: Color = header,
+    showBottomNavigation: MutableState<Boolean>,
 ) {
-    Log.d("CurrenciesScreen", "CurrenciesScreen called with baseCurrency: $baseCurrency")
+    showBottomNavigation.value = true
 
     val viewModel: MainViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+//    val currencyState by viewModel.currencyState.collectAsStateWithLifecycle()
 
-    val currencies = listOf("USD", "EUR", "JPY", "GBP")
+    val currencies = mutableListOf("USD", "EUR", "JPY", "GBP").also {
+        it.remove(state.coins.chosenCoin)
+    }
+    var base: String by rememberSaveable { mutableStateOf(state.coins.chosenCoin) }
 
     Log.d("CurrenciesScreen", "State: $state")
 
-    LaunchedEffect(baseCurrency) {
-        viewModel.loadCurrency(CurrencyOrder.Listing(OrderType.Descending), baseCurrency)
+    LaunchedEffect(base) {
+        viewModel.loadCurrency(CurrencyOrder.Name(OrderType.Ascending), base)
     }
 
     Column(
@@ -136,18 +142,18 @@ fun CurrenciesScreen(
                                     width = 1.dp,
                                     color = primary,
                                     shape = RoundedCornerShape(4.dp)
-                                )
-                            ,
+                                ),
                             expanded = expanded,
                             onDismissRequest = {
                                 expanded = false
                             }
                         ) {
                             currencies.forEach { currency ->
-                                if (currency == baseCurrency) return@forEach
                                 DropdownMenuItem(
                                     onClick = {
                                         viewModel.updateBaseCurrency(currency)
+                                        base = currency
+                                        Log.d("MyTag", "$base , $currency")
                                         expanded = false
                                     },
                                     text = {
@@ -168,7 +174,6 @@ fun CurrenciesScreen(
                             }
                         }
                     }
-
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
@@ -179,7 +184,11 @@ fun CurrenciesScreen(
 
                     ) {
                         IconButton(onClick = {
-                            navController.navigate(Screen.Filters.route)
+                            if (base.isNotEmpty()) {
+                                navController.navigate(Screen.Filters.route + "/$base")
+                            }
+                            Log.d("MyTag", "$base")
+
                         }) {
                             Icon(
                                 painterResource(R.drawable.filter), contentDescription = "Filter",
@@ -197,20 +206,23 @@ fun CurrenciesScreen(
                 .background(Color.White)
         ) {
             if (state.isLoading) {
-                CircularProgressIndicator(
 
+                CircularProgressIndicator(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .padding(16.dp)
                 )
+
             } else {
-               LazyColumn(
-                   Modifier.fillMaxWidth()
-               ) {
-                   items(state.coins.ratesModel) {coin ->
-                       CardItem(currentModel = coin)
-                   }
-               }
+                val filteredRatesModel =
+                    state.coins.ratesModel.filter { it.name != state.coins.chosenCoin }
+                LazyColumn(
+                    Modifier.fillMaxWidth()
+                ) {
+                    items(filteredRatesModel) { coin ->
+                        CardItem(currentModel = coin)
+                    }
+                }
             }
         }
     }

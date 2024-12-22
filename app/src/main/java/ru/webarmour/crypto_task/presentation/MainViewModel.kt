@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.webarmour.crypto_task.domain.CurrencyModel
@@ -31,28 +30,41 @@ class MainViewModel @Inject constructor(
     private val checkForFavouriteUseCase: CheckForFavouriteUseCase,
 ) : ViewModel() {
 
-    private var _baseCurrency: String? = null
-    val baseCurrency: String?
-        get() = _baseCurrency
-
-    private val _currencyState = MutableStateFlow<CurrencyModel?>(null)
-    val currencyState = _currencyState.asStateFlow()
 
     fun loadCurrency(currencyOrder: CurrencyOrder, baseCoin: String) {
         viewModelScope.launch {
             getCoinUseCase(
                 currencyOrder, baseCoin
-            ).collect { sortedCurrencyModel ->
-                _currencyState.emit(sortedCurrencyModel)
-                _baseCurrency = baseCoin
+            ).onStart {
+                _state.value = state.value.copy(
+                    isLoading = true
+                )
+            }.collect { sortedCurrencyModel ->
+                _state.value = state.value.copy(
+                    isLoading = false,
+                    coins = sortedCurrencyModel,
+                    selectedCoin = sortedCurrencyModel.chosenCoin
+                )
             }
         }
     }
 
-    fun updateSortOrder(currencyOrder: CurrencyOrder, baseCoin: String) {
+//    fun updateSortOrder(currencyOrder: CurrencyOrder, baseCoin: String) {
+//        viewModelScope.launch {
+//            loadCurrency(currencyOrder, baseCoin)
+//        }
+//    }
+
+    private val _selectedFilterState = MutableStateFlow<CurrencyOrder>(
+        CurrencyOrder.Name(OrderType.Descending)
+    )
+    val selectedFilterState = _selectedFilterState.asStateFlow()
+
+    fun updateSelectedFilterOption(order: CurrencyOrder) {
         viewModelScope.launch {
-            loadCurrency(currencyOrder, baseCoin)
+            _selectedFilterState.value = order
         }
+
     }
 
 
@@ -71,22 +83,13 @@ class MainViewModel @Inject constructor(
     private val _state = MutableStateFlow(CurrencyState())
 
     val state = _state
-        .onStart {
-            loadData("EUR")
-            loadCurrency(
-                currencyOrder = CurrencyOrder.Name(OrderType.Descending),
-                baseCoin = "EUR"
-            )
-        }
-        .retry(5) {
-            false
-        }
         .stateIn(
             viewModelScope,
             started = SharingStarted.WhileSubscribed(5000L),
             initialValue = CurrencyState(
-                selectedCoin = CurrencyModel(
-                    chosenCoin = "",
+                isLoading = true,
+                coins = CurrencyModel(
+                    chosenCoin = "USD",
                     ratesModel = listOf()
                 )
             )
@@ -96,7 +99,6 @@ class MainViewModel @Inject constructor(
         _state.value = state.value.copy(
             coins = state.value.coins.copy(chosenCoin = baseCurrency)
         )
-        loadData(baseCurrency)
         Log.d("MainScreenViewModel", "Base currency updated to: $baseCurrency")
     }
 
@@ -124,7 +126,6 @@ class MainViewModel @Inject constructor(
                     isLoading = false,
                     coins = coin
                 )
-                _baseCurrency = coin.chosenCoin
                 Log.d("MainScreenViewModel", "Data loaded: $coin")
             }
         }

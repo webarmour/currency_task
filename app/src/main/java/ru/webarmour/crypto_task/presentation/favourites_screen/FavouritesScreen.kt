@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -26,11 +27,12 @@ import ru.webarmour.crypto_task.presentation.theme.textDefaults
 
 @Composable
 fun FavouritesScreen(
-    navController: NavHostController,
     textColor: Color = textDefaults,
     backgroundColor: Color = header,
-    viewModel: MainViewModel = hiltViewModel()
+    viewModel: MainViewModel = hiltViewModel(),
+    showBottomNavigation: MutableState<Boolean>
 ) {
+    showBottomNavigation.value = true
     val state = viewModel.favoriteState.collectAsStateWithLifecycle()
 
     Column(

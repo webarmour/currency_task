@@ -1,21 +1,30 @@
 package ru.webarmour.crypto_task.domain.util
 
-sealed class CurrencyOrder(val orderType: OrderType) {
+import android.os.Bundle
+import androidx.compose.runtime.saveable.Saver
 
-    class Name(orderType:OrderType): CurrencyOrder(orderType)
+sealed class CurrencyOrder(open val orderType: OrderType) {
+    data class Name(override val orderType: OrderType) : CurrencyOrder(orderType)
+    data class Listing(override val orderType: OrderType) : CurrencyOrder(orderType)
 
-    class Listing(orderType:OrderType): CurrencyOrder(orderType)
-
-    fun copy(orderType: OrderType):CurrencyOrder {
-        return when(this){
-            is Name -> Name(orderType)
-            is Listing -> Listing(orderType)
-        }
-    }
 }
 
 sealed class OrderType {
-    object Ascending: OrderType()
-    object Descending: OrderType()
+    data object Ascending : OrderType() {
+        override fun toString(): String = "Ascending"
+    }
+    data object Descending : OrderType() {
+        override fun toString(): String = "Descending"
+    }
+
+    companion object {
+        fun fromString(value: String): OrderType {
+            return when (value) {
+                "Ascending" -> Ascending
+                "Descending" -> Descending
+                else -> throw IllegalArgumentException("Unknown OrderType: $value")
+            }
+        }
+    }
 }
 

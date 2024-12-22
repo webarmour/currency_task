@@ -6,22 +6,18 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.Query
 import ru.webarmour.crypto_task.BuildConfig
-import ru.webarmour.crypto_task.data.util.NetworkError
-import ru.webarmour.crypto_task.data.util.Result
-import java.util.Locale
 
 
 const val BASE_URL = "https://api.apilayer.com/exchangerates_data/"
-
 interface CryptoApi {
 
 
     @GET("latest")
     suspend fun getCurrency(
         @Query("base") base: String,
+        @Query("symbols") symbols: List<String> = listOf("AED, USD, BYN, RUB, EUR")
     ): CurrencyDto
 
 }
@@ -32,6 +28,7 @@ object RetrofitInstance {
 
 
     private val okHttpClient = OkHttpClient.Builder()
+
         .addInterceptor { chain ->
             val originalRequest = chain.request()
             val newUrl = originalRequest
@@ -43,7 +40,12 @@ object RetrofitInstance {
                 .url(newUrl)
                 .build()
             chain.proceed(newRequest)
-        }.build()
+
+        }
+        .addInterceptor(HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        })
+        .build()
 
     val retrofit: CryptoApi = Retrofit.Builder()
         .baseUrl(BASE_URL)

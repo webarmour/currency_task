@@ -40,9 +40,9 @@ fun BottomNavigationBar(
     ) {
         NavigationBarItem(
             icon = { Icon(painterResource(R.drawable.currencies), contentDescription = null) },
-//            label = { Text("Currencies") },
+            label = { Text("Currencies") },
             selected = currentScreen is Screen.Currencies,
-            onClick = { onScreenSelected(Screen.Currencies("USD")) },
+            onClick = { onScreenSelected(Screen.Currencies)},
             colors = NavigationBarItemColors(
                 selectedIconColor = primary,
                 selectedTextColor = selectedTextColor,
@@ -56,7 +56,7 @@ fun BottomNavigationBar(
         )
         NavigationBarItem(
             icon = { Icon(painterResource(R.drawable.favorites_on), contentDescription = null) },
-//            label = { Text("Favourites") },
+            label = { Text("Favourites") },
             selected = currentScreen is Screen.Favourites,
             onClick = { onScreenSelected(Screen.Favourites) },
             colors = NavigationBarItemColors(
